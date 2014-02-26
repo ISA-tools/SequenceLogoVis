@@ -11,12 +11,40 @@ SequenceLogo.variables = {
     plotHeight: 0,
     plotCount: 0,
     canvas: undefined,
-    stats : {},
-    colorMap: {
-        R: "#1FAABD", H: "#1FAABD", K: "#1FAABD",
-        D: "#D75032", C: "#64AD59", S: "#64AD59", G: "#64AD59", Y: "#64AD59", T: "#64AD59", E: "#64AD59",
-        P: "#4B3E4D", F: "#4B3E4D", V: "#4B3E4D", L: "#4B3E4D", I: "#4B3E4D", A: "#4B3E4D",
-        N: "#92278F", Q: "#92278F"
+    stats: {},
+    amino_acids: {
+//        Positive side chains
+        R: {"color": "#1FAABD", "name": "Arginine", "short": "Ala", "charge": 1, "hydropathy": -4.5},
+        H: {"color": "#1FAABD", "name": "Histidine", "short": "His", "charge": 1, "hydropathy": -3.2},
+        K: {"color": "#1FAABD", "name": "Lysine", "short": "Lys", "charge": 1, "hydropathy": -3.9},
+
+//      Negative side chains
+        D: {"color": "#D75032", "name": "Aspartic acid", "short": "Asp", "charge": -1, "hydropathy": -3.5},
+        E: {"color": "#D75032", "name": "Glutamic acid", "short": "Glu", "charge": -1, "hydropathy": -3.5},
+
+
+        C: {"color": "#64AD59", "name": "Cysteine", "short": "Cys", "charge": 0, "hydropathy": 2.5},
+        S: {"color": "#64AD59", "name": "Serine", "short": "Ser", "charge": 0, "hydropathy": -0.8},
+        G: {"color": "#64AD59", "name": "Glycine", "short": "Cys", "charge": 0, "hydropathy": -0.4},
+        Y: {"color": "#64AD59", "name": "Tyrosine", "short": "Tyr", "charge": 0, "hydropathy": -0.8},
+        T: {"color": "#64AD59", "name": "Threonine", "short": "Thr", "charge": 0, "hydropathy": -0.7},
+
+
+        P: {"color": "#4B3E4D", "name": "Proline", "short": "Pro", "charge": 0, "hydropathy": -1.6},
+        F: {"color": "#4B3E4D", "name": "Phenylalanine", "short": "Phe", "charge": 0, "hydropathy": 2.8},
+        V: {"color": "#4B3E4D", "name": "Valine", "short": "Val", "charge": 0, "hydropathy": 4.2},
+        L: {"color": "#4B3E4D", "name": "Leucine", "short": "Leu", "charge": 0, "hydropathy": 3.8},
+        I: {"color": "#4B3E4D", "name": "Isoleucine", "short": "Ili", "charge": 0, "hydropathy": 4.5},
+        A: {"color": "#4B3E4D", "name": "Alanine", "short": "Ala", "charge": 0, "hydropathy": 1.8},
+
+        M: {"color": "#E57E25", "name": "Methionine", "short": "Met", "charge": 0, "hydropathy": 1.9},
+        W: {"color": "#E57E25", "name": "Tryptophan", "short": "Trp", "charge": 0, "hydropathy": -0.9},
+
+
+        N: {"color": "#92278F", "name": "Asparagine", "short": "Asn", "charge": 0, "hydropathy": -3.5},
+        Q: {"color": "#92278F", "name": "Glutamine", "short": "Pro", "charge": 0, "hydropathy": -3.5},
+
+        X: {"color": "#f1f2f1", "name": "Unknown", "short": "X", "charge": 0, "hydropathy": 0},
     },
     positionTextStyle: {font: '12px Helvetica, Verdana', fill: "#414241", "font-weight": "lighter"},
     barTextStyle: {font: '12px Helvetica, Verdana', fill: "#fff", "font-weight": "bolder"}
@@ -78,8 +106,8 @@ SequenceLogo.rendering = {
 
                 if (SequenceLogo.variables.plotCount == 0) {
                     // draw position number
-                    SequenceLogo.variables.canvas.rect(+positionIndex * widthPerPosition, 50, widthPerPosition, SequenceLogo.variables.height).attr({"fill": positionIndex %2 == 0 ? "#f1f2f1" : "#fff", "stroke": "#fff"}).toBack();
-                    SequenceLogo.variables.canvas.text(positionIndex * widthPerPosition + 11, 8, +positionIndex+1).attr(SequenceLogo.variables.positionTextStyle);
+                    SequenceLogo.variables.canvas.rect(+positionIndex * widthPerPosition, 50, widthPerPosition, SequenceLogo.variables.height).attr({"fill": positionIndex % 2 == 0 ? "#f1f2f1" : "#fff", "stroke": "#fff"}).toBack();
+                    SequenceLogo.variables.canvas.text(positionIndex * widthPerPosition + 11, 8, +positionIndex + 1).attr(SequenceLogo.variables.positionTextStyle);
                 }
 
                 for (var barToDraw in sorted) {
@@ -88,8 +116,8 @@ SequenceLogo.rendering = {
                     if (letter != ".") {
                         var value = dataToDraw[positionIndex][letter];
                         var barHeight = scale(value);
-                        SequenceLogo.variables.canvas.rect(positionIndex * widthPerPosition + 2, yPos, widthPerPosition - 4, barHeight).attr({"fill": SequenceLogo.variables.colorMap[letter], "stroke": "#fff"}).toFront();
-                        if (barHeight / maxBarHeight > .4) {
+                        SequenceLogo.variables.canvas.rect(positionIndex * widthPerPosition + 2, yPos, widthPerPosition - 4, barHeight).attr({"fill": SequenceLogo.variables.amino_acids[letter].color, "stroke": "#fff"}).toFront();
+                        if (barHeight / maxBarHeight > .35) {
                             SequenceLogo.variables.canvas.text(positionIndex * widthPerPosition + 9, yPos + 8, letter).attr(SequenceLogo.variables.barTextStyle);
                         }
                         yPos += barHeight;
@@ -119,18 +147,44 @@ SequenceLogo.rendering = {
 }
 
 SequenceLogo.statistics = {
-    processData: function(data) {
-       // runs over the data and calculates diversity metrics, determining charge (+/-/n), hydrophobicity (%hphob, %hphil)
-       // and variation measure (diversity at that position - probably Std Deviation).
+    processData: function (data) {
+        // runs over the data and calculates diversity metrics, determining charge (+/-/n), hydrophobicity (%hphob, %hphil)
+        // and variation measure (diversity at that position - probably Std Deviation).
 
         for (var positionIndex in data) {
-            var metrics = {"charge":{"+ve":0, "-ve":0}, "hydrophobicity":{"hydrophobic":0, "hydrophilic":0}, "deviation":0}
+            var metrics = {"charge": 0, "hydrophobicity": 0, "deviation": 0}
             if (positionIndex != "metadata") {
-                for (var barToDraw in data[positionIndex]) {
-
+                var values = [];
+                for (var letter in data[positionIndex]) {
+                    if (letter != ".") {
+                        metrics.hydrophobicity += (data[positionIndex][letter]*SequenceLogo.variables.amino_acids[letter].hydropathy);
+                        metrics.charge += SequenceLogo.variables.amino_acids[letter].charge;
+                        values.push(data[positionIndex][letter]);
+                    }
                 }
+                // TODO: Std deviation doesn't really work for this...
+                var stddev = this.calculateStandardDeviation(values);
             }
+
+            console.log("Metrics for "+ positionIndex + " is ");
+            console.log(metrics);
         }
+    },
+
+    isArray: function (obj) {
+        return Object.prototype.toString.call(obj) === "[object Array]";
+    },
+
+    getAverageFromNumArr: function (values) {
+        if (!this.isArray(values)) {
+            return false;
+        }
+        var i = values.length,
+            sum = 0;
+        while (i--) {
+            sum += values[ i ];
+        }
+        return (sum / values.length);
     },
 
     getVariance: function (values, decPlaces) {
@@ -145,7 +199,7 @@ SequenceLogo.statistics = {
             v += Math.pow((values[ i ] - avg), 2);
         }
         v /= values.length;
-        return this.getNumWithSetDec(v, decPlaces);
+        return v;
     },
 
     calculateStandardDeviation: function (values, decPlaces) {
