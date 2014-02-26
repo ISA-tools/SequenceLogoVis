@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sequence Logo</title>
+</head>
+<body>
+
+<div id="visualization"></div>
+</body>
+
+<script type="application/javascript" src="assets/js/lib/d3.v3.min.js"></script>
+<script type="application/javascript" src="assets/js/lib/raphael-min.js"></script>
+<script type="application/javascript" src="assets/js/SequenceLogo.js"></script>
+
+<script type="text/javascript">
+    SequenceLogo.rendering.createSequenceLogo(["data/panel-a.txt", "data/panel-b.txt", "data/panel-c.txt"], "visualization", 1000, 400);
+</script>
+</html>
