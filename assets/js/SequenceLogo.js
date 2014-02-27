@@ -12,8 +12,10 @@ SequenceLogo.variables = {
     plotCount: 0,
     glyph_strategy: "all", // can also be only_differences
     canvas: undefined,
-    stats: {},
+    highlight_conserved: true,
+    height_algorithm: "entropy", // can also be "entropy", the classic way of creating sequence logos
     amino_acids: {
+        "count": 20,
 //        Positive side chains
         R: {"color": "#1FAABD", "name": "Arginine", "short": "Ala", "charge": 1, "hydropathy": -4.5},
         H: {"color": "#1FAABD", "name": "Histidine", "short": "His", "charge": 1, "hydropathy": -3.2},
@@ -45,10 +47,10 @@ SequenceLogo.variables = {
         N: {"color": "#92278F", "name": "Asparagine", "short": "Asn", "charge": 0, "hydropathy": -3.5},
         Q: {"color": "#92278F", "name": "Glutamine", "short": "Pro", "charge": 0, "hydropathy": -3.5},
 
-        X: {"color": "#f1f2f1", "name": "Unknown", "short": "X", "charge": 0, "hydropathy": 0},
+        X: {"color": "#f1f2f1", "name": "Unknown", "short": "X", "charge": 0, "hydropathy": 0}
     },
     positionTextStyle: {font: '12px Helvetica, Verdana', fill: "#414241", "font-weight": "lighter"},
-    barTextStyle: {font: '12px Helvetica, Verdana', fill: "#fff", "font-weight": "bolder"}
+    barTextStyle: {font: '14px Helvetica, Verdana', fill: "#fff", "font-weight": "bolder"}
 }
 
 var data = {};
@@ -144,25 +146,33 @@ SequenceLogo.rendering = {
      */
     drawDeviation: function (deviation, xPosition, yPos, maxXPosition) {
         if (deviation == 1) {
-            this.Line(xPosition + 7, yPos - 6, maxXPosition - 7, yPos - 6, "#aaa", 2);
+            this.Line(xPosition + 7, yPos - 6, maxXPosition - 7, yPos - 6, "#414241", 2);
         } else if (deviation == 2) {
             this.Line(xPosition + 7, yPos - 6, maxXPosition - 7, yPos - 8, "#aaa", 2);
         } else if (deviation == 3) {
-            this.Line(xPosition + 7, yPos - 6, maxXPosition - 7, yPos - 12, "#aaa", 1);
+            this.Line(xPosition + 7, yPos - 6, maxXPosition - 7, yPos - 12, "#f1f2f1", 1);
         } else {
             var middleXPos = xPosition + ((maxXPosition - xPosition) / 2);
-            this.Line(middleXPos, yPos - 3, middleXPos, yPos - 12, "#aaa", 1);
+            this.Line(middleXPos, yPos - 3, middleXPos, yPos - 12, "#f1f2f1", 1);
         }
     },
 
     drawSequenceLogo: function (sequenceData, key) {
         var widthPerPosition = SequenceLogo.variables.width / Object.keys(sequenceData["positions"]).length - 1;
 
+        var maxBarHeight = (SequenceLogo.variables.plotHeight * .667);
+        var scale = d3.scale.linear().domain([0, +sequenceData.metadata.sequences]).range([0, maxBarHeight]);
+
+        if (SequenceLogo.variables.height_algorithm == "entropy") {
+            scale = d3.scale.linear()
+                .domain([0, SequenceLogo.statistics.log2(SequenceLogo.variables.amino_acids.count)])
+                .range([0, maxBarHeight]);
+        }
+
         for (var positionIndex in sequenceData["positions"]) {
             if (positionIndex != "statistics") {
                 var sorted = this.sortByValue(sequenceData["positions"][positionIndex]);
-                var maxBarHeight = (SequenceLogo.variables.plotHeight * .667);
-                var scale = d3.scale.linear().domain([0, +sequenceData.metadata.sequences]).range([0, maxBarHeight]);
+
 
                 // if
                 var plotPosition = SequenceLogo.variables.plotCount;
@@ -175,10 +185,10 @@ SequenceLogo.rendering = {
                 var xPosition = positionIndex * widthPerPosition;
 
                 if (plotPosition == 0) {
-                    // draw position number
-
                     SequenceLogo.variables.canvas.rect(xPosition, 50, widthPerPosition, SequenceLogo.variables.height).attr({"fill": positionIndex % 2 == 0 ? "#f1f2f1" : "#fff", "stroke": "#fff"}).toBack();
-                    SequenceLogo.variables.canvas.text(xPosition + 11, 8, +positionIndex + 1).attr(SequenceLogo.variables.positionTextStyle);
+                    SequenceLogo.variables.canvas.text(xPosition + 13, 8, +positionIndex + 1).attr(SequenceLogo.variables.positionTextStyle);
+                } else {
+                    yPos -= 20;
                 }
 
                 var stats = sequenceData["positions"][positionIndex].metrics;
@@ -192,9 +202,13 @@ SequenceLogo.rendering = {
 
                     if (letter != "." && letter != "metrics") {
                         var value = sequenceData["positions"][positionIndex][letter];
+                        if (SequenceLogo.variables.height_algorithm == "entropy") {
+                            value = SequenceLogo.statistics.calculateEntropy(letter, sequenceData["positions"][positionIndex], sequenceData.metadata.sequences);
+                        }
                         var barHeight = scale(value);
-                        SequenceLogo.variables.canvas.rect(xPosition + 2, yPos, widthPerPosition - 4, barHeight).attr({"fill": SequenceLogo.variables.amino_acids[letter].color, "stroke": "#fff"}).toFront();
-                        if (barHeight / maxBarHeight > .35) {
+                        SequenceLogo.variables.canvas.rect(xPosition + 2, yPos, widthPerPosition - 4, barHeight).attr({"fill": SequenceLogo.variables.amino_acids[letter].color, "stroke": "#fff",
+                            opacity: stats.variance <= 2 || !SequenceLogo.variables.highlight_conserved ? 1 : .2}).toFront();
+                        if (barHeight / maxBarHeight > .20) {
                             SequenceLogo.variables.canvas.text(xPosition + 9, yPos + 8, letter).attr(SequenceLogo.variables.barTextStyle);
                         }
                         yPos += barHeight;
@@ -256,16 +270,13 @@ SequenceLogo.statistics = {
             var sorted = SequenceLogo.rendering.sortByValue(data["positions"][positionIndex]);
 
             // threshold to be reached before satisfied that most of the cases are covered by the current items (95%)
-            var threshold = .90;
+            var threshold = .80;
 
             var ofTotal = 0;
             var numberOfItemsBeforeThreshold = 0;
 
-            var hydroScores = [], chargeScores = [];
-
             for (var letterIndex in sorted) {
                 var letter = sorted[letterIndex];
-                console.log(letter);
                 if (letter != ".") {
                     metrics.hydrophobicity += (data["positions"][positionIndex][letter] * SequenceLogo.variables.amino_acids[letter].hydropathy);
                     metrics.charge += (data["positions"][positionIndex][letter] * SequenceLogo.variables.amino_acids[letter].charge);
@@ -283,11 +294,31 @@ SequenceLogo.statistics = {
             metrics.variance = numberOfItemsBeforeThreshold;
 
             data["positions"][positionIndex]["metrics"] = metrics;
+        }
+    },
 
+    calculateEntropy: function (letter, all_letters, totalSequences) {
+        var e_n = 1 / Math.log(2) * (SequenceLogo.variables.amino_acids.count - 1) / (2 * totalSequences);
 
+        // correct
+        var prob_letter = all_letters[letter] / totalSequences;
+
+        var h_i = 0;
+        for (var letters in all_letters) {
+            if (letters != "metrics") {
+                console.log(letters);
+                var prob_a = all_letters[letters] / totalSequences;
+                h_i -= (prob_a * this.log2(prob_a));
+            }
         }
 
+        var r_i = this.log2(SequenceLogo.variables.amino_acids.count) - (h_i + e_n);
 
+        return prob_letter * r_i;
+    },
+
+    log2: function (val) {
+        return Math.log(val) / Math.LN2;
     }
 
 }
