@@ -138,19 +138,19 @@ SequenceLogo.rendering = {
     /**
      *
      * @param deviation - a range between 0 and 4
-     *                    0 - no deviation, 1 - small variation, 2 - medium variation, 3 - high variation
+     *                    1 - no deviation, 2 - small variation, 3 - medium variation, 4+ - high variation
      * @param xPosition
      * @param yPos
      */
     drawDeviation: function (deviation, xPosition, yPos, maxXPosition) {
-        if (deviation == 0) {
+        if (deviation == 1) {
             this.Line(xPosition + 7, yPos - 6, maxXPosition - 7, yPos - 6, "#aaa", 2);
-        } else if (deviation == 1) {
-            this.Line(xPosition + 7, yPos - 6, maxXPosition - 7, yPos - 8, "#aaa", 2);
         } else if (deviation == 2) {
-            this.Line(xPosition + 7, yPos - 6, maxXPosition - 7, yPos - 12, "#aaa", 1);
+            this.Line(xPosition + 7, yPos - 6, maxXPosition - 7, yPos - 8, "#aaa", 2);
         } else if (deviation == 3) {
-            var middleXPos = xPosition + ((maxXPosition - xPosition)/2);
+            this.Line(xPosition + 7, yPos - 6, maxXPosition - 7, yPos - 12, "#aaa", 1);
+        } else {
+            var middleXPos = xPosition + ((maxXPosition - xPosition) / 2);
             this.Line(middleXPos, yPos - 3, middleXPos, yPos - 12, "#aaa", 1);
         }
     },
@@ -165,8 +165,8 @@ SequenceLogo.rendering = {
                 var scale = d3.scale.linear().domain([0, +sequenceData.metadata.sequences]).range([0, maxBarHeight]);
 
                 // if
-                var plotPosition =SequenceLogo.variables.plotCount;
-                if(key.indexOf("|") != -1) {
+                var plotPosition = SequenceLogo.variables.plotCount;
+                if (key.indexOf("|") != -1) {
                     plotPosition = parseInt(key.substring(0, key.indexOf("|")));
                 }
 
@@ -182,10 +182,10 @@ SequenceLogo.rendering = {
                 }
 
                 var stats = sequenceData["positions"][positionIndex].metrics;
-                console.log(stats);
+
                 this.drawCharge(stats.charge_score, xPosition, yPos);
                 this.drawHydropathy(stats.hydropathy, (xPosition + widthPerPosition - 10), yPos);
-                this.drawDeviation(3, xPosition, yPos, xPosition + widthPerPosition);
+                this.drawDeviation(stats.variance, xPosition, yPos, xPosition + widthPerPosition);
 
                 for (var barToDraw in sorted) {
                     var letter = sorted[barToDraw];
@@ -252,23 +252,42 @@ SequenceLogo.statistics = {
             var metrics = {"charge": 0, "hydrophobicity": 0, "deviation": 0}
 
             var values = [];
-            for (var letter in data["positions"][positionIndex]) {
+
+            var sorted = SequenceLogo.rendering.sortByValue(data["positions"][positionIndex]);
+
+            // threshold to be reached before satisfied that most of the cases are covered by the current items (95%)
+            var threshold = .90;
+
+            var ofTotal = 0;
+            var numberOfItemsBeforeThreshold = 0;
+
+            var hydroScores = [], chargeScores = [];
+
+            for (var letterIndex in sorted) {
+                var letter = sorted[letterIndex];
+                console.log(letter);
                 if (letter != ".") {
                     metrics.hydrophobicity += (data["positions"][positionIndex][letter] * SequenceLogo.variables.amino_acids[letter].hydropathy);
                     metrics.charge += (data["positions"][positionIndex][letter] * SequenceLogo.variables.amino_acids[letter].charge);
                     values.push(data["positions"][positionIndex][letter]);
                 }
+
+                ofTotal += data["positions"][positionIndex][letter];
+                numberOfItemsBeforeThreshold++;
+                // leave if we've hit the threshold
+                if (ofTotal / data.metadata.sequences >= threshold) break;
             }
 
             metrics.hydropathy = metrics.hydrophobicity < 0 ? -1 : 1;
             metrics.charge_score = metrics.charge < 0 ? -1 : 1;
+            metrics.variance = numberOfItemsBeforeThreshold;
 
             data["positions"][positionIndex]["metrics"] = metrics;
-            // TODO: Std deviation doesn't really work for this...
+
 
         }
 
-        // TODO: find changes across positions
+
     }
 
 }
