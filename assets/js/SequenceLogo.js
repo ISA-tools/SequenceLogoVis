@@ -12,11 +12,14 @@ SequenceLogo.variables = {
     plotHeight: 0,
     plotCount: 0,
     positionCount: 0,
+    position_info: {},
+    marginLeft: 30,
     glyph_strategy: "only_differences", // can be "all" or "only_differences"
     canvas: undefined,
-    highlight_conserved: true,
-    draw_consensus: false,
+    highlight_conserved: false,
+    draw_consensus: true,
     height_algorithm: "entropy", // can be "frequency" or "entropy", the classic way of creating sequence logos
+    type: "amino_acids",
     amino_acids: {
         "count": 20,
         R: {"color": "#1FAABD", "name": "Arginine", "short": "Ala", "charge": 1, "hydropathy": -4.5},
@@ -48,10 +51,32 @@ SequenceLogo.variables = {
 
         X: {"color": "#f1f2f1", "name": "Unknown", "short": "X", "charge": 0, "hydropathy": 0}
     },
+
+    dna: {
+        "count": 4,
+        A: {"color": "#1FAABD", "name": "Adenine", "short": "A"},
+        T: {"color": "#D75032", "name": "Thymine", "short": "T"},
+        G: {"color": "#4B3E4D", "name": "Guanine", "short": "G"},
+        C: {"color": "#64AD59", "name": "Cytosine", "short": "C"},
+        X: {"color": "#f1f2f1", "name": "Unknown", "short": "X"}
+    },
+
+    rna: {
+        "count": 4,
+        A: {"color": "#1FAABD", "name": "Adenine", "short": "A"},
+        U: {"color": "#D75032", "name": "Uracil", "short": "U"},
+        G: {"color": "#4B3E4D", "name": "Guanine", "short": "G"},
+        C: {"color": "#64AD59", "name": "Cytosine", "short": "C"},
+        X: {"color": "#f1f2f1", "name": "Unknown", "short": "X"}
+    },
+
+
     positionTextStyle: {font: '12px Helvetica, Verdana', fill: "#414241", "font-weight": "lighter"},
     barTextStyle: {font: '14px Helvetica, Verdana', fill: "#fff", "font-weight": "bolder"},
-    consensusTextStyle: {font: '13px Helvetica, Verdana', "font-weight": "bolder"}
+    consensusTextStyle: {font: '13px Helvetica, Verdana', "font-weight": "bolder"},
+    axisTextStyle: {font: '7px Helvetica, Verdana', "font-weight": "normal"}
 }
+
 
 var data = {};
 
@@ -63,6 +88,15 @@ SequenceLogo.rendering = {
         SequenceLogo.variables.placement = options.placement;
         SequenceLogo.variables.width = options.width;
         SequenceLogo.variables.height = options.height;
+
+
+        if (options.type)
+            SequenceLogo.variables.type = options.type;
+
+        if (options.glyph_strategy)
+            SequenceLogo.variables.glyph_strategy = options.glyph_strategy;
+
+
         SequenceLogo.variables.canvas = new Raphael(options.placement, options.width, options.height);
         SequenceLogo.rendering.processSequenceFiles(options.files);
     },
@@ -74,6 +108,7 @@ SequenceLogo.rendering = {
         for (var fileIndex in files) {
             d3.csv(files[fileIndex], function (sequenceData) {
                 var key = Object.keys(sequenceData[0])[0];
+                console.log(key);
                 data[key] = {"metadata": {"sequences": sequenceData.length}, "positions": {}};
                 for (var sequenceIndex in sequenceData) {
                     SequenceLogo.variables.positionCount = sequenceData[sequenceIndex][key].length;
@@ -106,21 +141,21 @@ SequenceLogo.rendering = {
      */
     drawCharge: function (charge, xPosition, yPos, positionIndex) {
 
-        var neutral_path = SequenceLogo.variables.canvas.path("M3.878,7.766C1.74,7.766,0,6.023,0,3.881C0,1.742,1.74,0,3.878,0C6.02,0,7.762,1.742,7.762,3.881 C7.762,6.023,6.02,7.766,3.878,7.766z M3.878,1.438c-1.346,0-2.441,1.096-2.441,2.443c0,1.35,1.096,2.447,2.441,2.447 c1.351,0,2.447-1.098,2.447-2.447C6.325,2.533,5.229,1.438,3.878,1.438z");
-        neutral_path.attr({fill: '#D1D3D4', 'stroke-width': '0', 'stroke-opacity': '1'}).transform("t" + (xPosition + 4) + " " + (yPos - 23) + ")");
 
-        neutral_path.node.id = 'charge-' + positionIndex;
-
-        if (charge < 0) {
-            var negative_line_path = SequenceLogo.variables.canvas.path("M0,1.32V0h3.871v1.32H0z");
+        if (charge == 0) {
+            var neutral_path = SequenceLogo.variables.canvas.path("M3.878,7.766C1.74,7.766,0,6.023,0,3.881C0,1.742,1.74,0,3.878,0C6.02,0,7.762,1.742,7.762,3.881 C7.762,6.023,6.02,7.766,3.878,7.766z M3.878,1.438c-1.346,0-2.441,1.096-2.441,2.443c0,1.35,1.096,2.447,2.441,2.447 c1.351,0,2.447-1.098,2.447-2.447C6.325,2.533,5.229,1.438,3.878,1.438z");
+            neutral_path.attr({fill: '#D1D3D4', 'stroke-width': '0', 'stroke-opacity': '1'}).transform("t" + (xPosition + 4) + " " + (yPos - 23) + ")");
+            neutral_path.node.id = 'charge-' + positionIndex;
+        } else if (charge < 0) {
+            var negative_line_path = SequenceLogo.variables.canvas.path("M0,2.32V0h4.871v2.32H0z");
             negative_line_path.attr({fill: '#D75032', 'stroke-width': '0', 'stroke-opacity': '1'}).transform("t" + (xPosition + 6) + " " + (yPos - 20) + ")");
             negative_line_path.node.id = 'charge-' + positionIndex;
-            neutral_path.attr({fill: '#D75032', 'stroke-width': '0', 'stroke-opacity': '1'});
+//            neutral_path.attr({fill: '#D75032', 'stroke-width': '0', 'stroke-opacity': '1'});
         } else if (charge > 0) {
             var positive_cross_path = SequenceLogo.variables.canvas.path("M 5.816,3.223 4.541,3.223 4.541,1.947 3.221,1.947 3.221,3.223 1.945,3.223 1.945,4.543 3.221,4.543 3.221,5.818 4.541,5.818 4.541,4.543 5.816,4.543 z");
             positive_cross_path.attr({fill: '#64AD59', 'stroke-width': '0', 'stroke-opacity': '1'}).transform("t" + (xPosition + 4) + " " + (yPos - 23) + ")");
             positive_cross_path.node.id = 'charge-' + positionIndex;
-            neutral_path.attr({fill: '#64AD59', 'stroke-width': '0', 'stroke-opacity': '1'});
+//            neutral_path.attr({fill: '#64AD59', 'stroke-width': '0', 'stroke-opacity': '1'});
         }
     },
 
@@ -164,7 +199,7 @@ SequenceLogo.rendering = {
     },
 
     findAndHideNonVaryingGlyphs: function () {
-        console.log("findAndHideNonVaryingGlyphs");
+
         for (var index = 0; index < SequenceLogo.variables.positionCount; index++) {
             var glyphs = {charge_score: {"previous": undefined, "same": true},
                 hydropathy: {"previous": undefined, "same": true},
@@ -201,49 +236,99 @@ SequenceLogo.rendering = {
         var maxBarHeight = (SequenceLogo.variables.plotHeight * .667);
         var scale = d3.scale.linear().domain([0, +sequenceData.metadata.sequences]).range([0, maxBarHeight]);
 
+
         if (SequenceLogo.variables.height_algorithm == "entropy") {
+
             scale = d3.scale.linear()
-                .domain([0, SequenceLogo.statistics.log2(SequenceLogo.variables.amino_acids.count)])
+                .domain([0, SequenceLogo.statistics.log2(SequenceLogo.variables[SequenceLogo.variables.type].count)])
                 .range([0, maxBarHeight]);
         }
+        var plotPosition = SequenceLogo.variables.plotCount;
+        SequenceLogo.variables.position_info[plotPosition] = {};
 
         for (var positionIndex in sequenceData["positions"]) {
             if (positionIndex != "statistics") {
                 var sorted = this.sortByValue(sequenceData["positions"][positionIndex]);
 
-                var plotPosition = SequenceLogo.variables.plotCount;
                 if (key.indexOf("|") != -1) {
                     plotPosition = parseInt(key.substring(0, key.indexOf("|")));
                 }
 
                 var yPos = 43 + plotPosition * SequenceLogo.variables.plotHeight;
 
-                var xPosition = positionIndex * widthPerPosition;
+                var xPosition = SequenceLogo.variables.marginLeft + (positionIndex * widthPerPosition);
 
                 if (plotPosition == 0) {
-                    SequenceLogo.variables.canvas.rect(xPosition, 50, widthPerPosition, maxBarHeight * (SequenceLogo.variables.fileCount+1)-30).attr({"fill": positionIndex % 2 == 0 ? "#f1f2f1" : "#fff", "stroke": "#fff"}).toBack();
+                    SequenceLogo.variables.canvas.rect(xPosition, 50, widthPerPosition, maxBarHeight * (SequenceLogo.variables.fileCount + 1) - 30).attr({"fill": positionIndex % 2 == 0 ? "#f1f2f1" : "#fff", "stroke": "#fff"}).toBack();
                     SequenceLogo.variables.canvas.text(xPosition + 13, 8, +positionIndex + 1).attr(SequenceLogo.variables.positionTextStyle);
                 } else {
                     yPos -= 20;
                 }
 
+                if (positionIndex == 0) {
+                    SequenceLogo.rendering.Line(SequenceLogo.variables.marginLeft - 4, yPos, SequenceLogo.variables.marginLeft - 4, yPos + maxBarHeight, "#aaa", 1);
+                    var text = SequenceLogo.variables.canvas.text(SequenceLogo.variables.marginLeft - 26, (yPos + maxBarHeight / 2), SequenceLogo.variables.height_algorithm == "entropy" ? "bits" : "% Percent").attr(SequenceLogo.variables.axisTextStyle);
+                    text.attr({transform: "r" + -90});
+                    SequenceLogo.variables.canvas.text(SequenceLogo.variables.marginLeft - 14, yPos, "0").attr(SequenceLogo.variables.axisTextStyle);
+
+                    SequenceLogo.variables.canvas.text(SequenceLogo.variables.marginLeft - 14, yPos + (maxBarHeight / 2),
+                            SequenceLogo.variables.height_algorithm == "entropy" ? SequenceLogo.statistics.getNumWithSetDec(
+                            SequenceLogo.statistics.log2(SequenceLogo.variables[SequenceLogo.variables.type].count), 2) / 2 : "50").attr(SequenceLogo.variables.axisTextStyle);
+
+                    SequenceLogo.variables.canvas.text(SequenceLogo.variables.marginLeft - 14, yPos + maxBarHeight,
+                            SequenceLogo.variables.height_algorithm == "entropy" ? SequenceLogo.statistics.getNumWithSetDec(
+                            SequenceLogo.statistics.log2(SequenceLogo.variables[SequenceLogo.variables.type].count), 2) : "100%")
+                        .attr(SequenceLogo.variables.axisTextStyle);
+                    SequenceLogo.rendering.Line(xPosition, yPos + maxBarHeight, SequenceLogo.variables.width - 20, yPos + maxBarHeight, "#eee", 1);
+                }
+
                 var stats = sequenceData["positions"][positionIndex].metrics;
 
-                this.drawCharge(stats.charge_score, xPosition, yPos, positionIndex);
-                this.drawHydropathy(stats.hydropathy, (xPosition + widthPerPosition - 10), yPos, positionIndex);
+                if (SequenceLogo.variables.type == "amino_acids") {
+                    this.drawCharge(stats.charge_score, xPosition, yPos, positionIndex);
+                    this.drawHydropathy(stats.hydropathy, (xPosition + widthPerPosition - 10), yPos, positionIndex);
+                }
                 this.drawDeviation(stats.variance, xPosition, yPos, xPosition + widthPerPosition, positionIndex);
+
+
+                if(!(plotPosition in SequenceLogo.variables.position_info)){
+                    SequenceLogo.variables.position_info[plotPosition] = {};
+                }
+
+                SequenceLogo.variables.position_info[plotPosition][positionIndex] = {};
 
                 for (var barToDraw in sorted) {
                     var letter = sorted[barToDraw];
+
 
                     if (letter != "." && letter != "metrics") {
                         var value = sequenceData["positions"][positionIndex][letter];
                         if (SequenceLogo.variables.height_algorithm == "entropy") {
                             value = SequenceLogo.statistics.calculateEntropy(letter, sequenceData["positions"][positionIndex], sequenceData.metadata.sequences);
                         }
+
+                        SequenceLogo.variables.position_info[plotPosition][positionIndex][letter] = {"value": sequenceData["positions"][positionIndex][letter], "entropy": value};
+
                         var barHeight = scale(value);
-                        SequenceLogo.variables.canvas.rect(xPosition + 2, yPos, widthPerPosition - 4, barHeight).attr({"fill": SequenceLogo.variables.amino_acids[letter].color, "stroke": "#fff",
-                            opacity: stats.variance <= 2 || !SequenceLogo.variables.highlight_conserved ? 1 : .2}).toFront();
+                        console.log(plotPosition + "-" + positionIndex);
+                        var bar = SequenceLogo.variables.canvas.rect(xPosition + 2, yPos, widthPerPosition - 4, barHeight).data("position", plotPosition + "-" + positionIndex).attr({"fill": SequenceLogo.variables[[SequenceLogo.variables.type]][letter].color, "stroke": "#fff",
+                            opacity: stats.variance <= 2 || !SequenceLogo.variables.highlight_conserved ? 1 : .2})
+                            .toFront()
+                            .hover(function (event) {
+                                var value = this.data().position.split("-");
+                                d3.select("#position").html(parseInt(value[1]) + 1);
+                                SequenceLogo.rendering.renderPopupSummary(value[0], value[1]);
+                                d3.select(".popup").classed("hidden", false);
+                                var x = event.pageX;
+                                if(x+300 > window.innerWidth) {
+                                    x = event.pageX-300;
+                                }
+                                d3.select(".popup").style({"top": event.pageY + "px", "left": x+ "px"});
+                            }, function () {
+                                d3.select(".popup").classed("hidden", true);
+                            });
+
+
                         if (barHeight / maxBarHeight > .20) {
                             SequenceLogo.variables.canvas.text(xPosition + 9, yPos + 8, letter).attr(SequenceLogo.variables.barTextStyle);
                         }
@@ -252,8 +337,8 @@ SequenceLogo.rendering = {
                 }
 
                 if (SequenceLogo.variables.draw_consensus) {
-                    var yPlotPosition = (plotPosition * SequenceLogo.variables.plotHeight) + SequenceLogo.variables.plotHeight
-                    SequenceLogo.variables.canvas.text((xPosition + 12), (yPlotPosition - 20), sorted[0]).attr(SequenceLogo.variables.consensusTextStyle).attr("fill", SequenceLogo.variables.amino_acids[sorted[0]].color);
+                    var yPlotPosition = (plotPosition * SequenceLogo.variables.plotHeight) + SequenceLogo.variables.plotHeight;
+                    SequenceLogo.variables.canvas.text((xPosition + 12), (yPlotPosition - 20), sorted[0]).attr(SequenceLogo.variables.consensusTextStyle).attr("fill", SequenceLogo.variables[[SequenceLogo.variables.type]][sorted[0]].color);
                 }
             }
         }
@@ -295,7 +380,7 @@ SequenceLogo.rendering = {
         }
         sortable.sort(function (a, b) {
             return b[1] - a[1]
-        })
+        });
 
         var sortedLetters = [];
         for (var index = 0; index < sortable.length; index++) {
@@ -303,8 +388,50 @@ SequenceLogo.rendering = {
         }
 
         return sortedLetters;
+    },
+
+    // Renders a summary of the information for a position
+    renderPopupSummary: function (plot, position) {
+        d3.select("#position_details").html("");
+
+        var width = 300, height = 250;
+        var popup_raph = new Raphael("position_details", width, height);
+
+        // split pane horizontally to compare frequencies of residues
+
+        var pane_width = width / Object.keys(SequenceLogo.variables.position_info).length;
+
+        // draw the items at position 'position' first, then the rest
+        var count = 0;
+        for (var plot_key in SequenceLogo.variables.position_info) {
+            var x = count * pane_width;
+            popup_raph.text(x + 25, 8, "Group " + plot_key).attr(SequenceLogo.variables.positionTextStyle)
+
+
+            var text_y = 21, y = 30;
+
+            var total = 0;
+            for (var letter in SequenceLogo.variables.position_info[plot][position]) {
+                total += SequenceLogo.variables.position_info[plot][position][letter].value;
+            }
+
+            var scale = d3.scale.linear().domain([0, total]).range([0, 50]);
+
+            for (var letter in SequenceLogo.variables.position_info[plot][position]) {
+                popup_raph.text(x + 25, text_y, letter).attr(SequenceLogo.variables.consensusTextStyle).attr("fill", SequenceLogo.variables[SequenceLogo.variables.type][letter].color);
+                // draw bar
+                popup_raph.rect(x + 35, y, 50, 15).attr({"fill": "#f1f2f1", "stroke": "#ccc"});
+                popup_raph.rect(x + 35, y, scale(SequenceLogo.variables.position_info[plot][position][letter].value), 15).attr({"fill": SequenceLogo.variables[SequenceLogo.variables.type][letter].color, "stroke": "none"});
+
+                popup_raph.text(x + 98, text_y, SequenceLogo.variables.position_info[plot][position][letter].value).attr(SequenceLogo.variables.positionTextStyle).attr("fill", SequenceLogo.variables[SequenceLogo.variables.type][letter].color);
+                y += 20;
+                text_y += 10;
+            }
+            count++;
+        }
+
     }
-}
+};
 
 SequenceLogo.statistics = {
     processData: function (data) {
@@ -327,8 +454,8 @@ SequenceLogo.statistics = {
             for (var letterIndex in sorted) {
                 var letter = sorted[letterIndex];
                 if (letter != ".") {
-                    metrics.hydrophobicity += (data["positions"][positionIndex][letter] * SequenceLogo.variables.amino_acids[letter].hydropathy);
-                    metrics.charge += (data["positions"][positionIndex][letter] * SequenceLogo.variables.amino_acids[letter].charge);
+                    metrics.hydrophobicity += (data["positions"][positionIndex][letter] * SequenceLogo.variables[[SequenceLogo.variables.type]][letter].hydropathy);
+                    metrics.charge += (data["positions"][positionIndex][letter] * SequenceLogo.variables[[SequenceLogo.variables.type]][letter].charge);
                     values.push(data["positions"][positionIndex][letter]);
                 }
 
@@ -347,7 +474,7 @@ SequenceLogo.statistics = {
     },
 
     calculateEntropy: function (letter, all_letters, totalSequences) {
-        var e_n = 1 / Math.log(2) * (SequenceLogo.variables.amino_acids.count - 1) / (2 * totalSequences);
+        var e_n = 1 / Math.log(2) * (SequenceLogo.variables[SequenceLogo.variables.type].count - 1) / (2 * totalSequences);
 
         // correct
         var prob_letter = all_letters[letter] / totalSequences;
@@ -360,13 +487,17 @@ SequenceLogo.statistics = {
             }
         }
 
-        var r_i = this.log2(SequenceLogo.variables.amino_acids.count) - (h_i + e_n);
+        var r_i = this.log2(SequenceLogo.variables[SequenceLogo.variables.type].count) - (h_i + e_n);
 
         return prob_letter * r_i;
     },
 
     log2: function (val) {
         return Math.log(val) / Math.LN2;
+    },
+    getNumWithSetDec: function (num, decPlaces) {
+        var pow10s = Math.pow(10, decPlaces || 0);
+        return ( decPlaces ) ? Math.round(pow10s * num) / pow10s : num;
     }
 
 }

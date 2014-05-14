@@ -2,10 +2,20 @@
 <html>
 <head>
     <title>Sequence Logo</title>
+    <link rel="stylesheet" href="assets/css/popup.css" type="text/css"/>
 </head>
 <body>
 
 <div id="visualization"></div>
+
+
+<div id="popup" class="popup hidden">
+    <div class="popup-header">Position <span id="position" class="pull-left"></span> </div>
+    <div class="clearfix"></div>
+    <div id="position_details">
+    </div>
+</div>
+
 </body>
 
 <script type="application/javascript" src="assets/js/lib/d3.v3.min.js"></script>
@@ -15,11 +25,12 @@
 <script type="text/javascript">
     SequenceLogo.rendering.createSequenceLogo(
             {
-                files: ["data/panel-a.txt", "data/panel-b.txt", "data/panel-c.txt"],
+                files: ["data/dna-a.txt", "data/dna-b.txt"],
                 placement: "visualization",
                 width: 1000,
-                height: 400,
-                glyphs: "all"
+                height: 500,
+                glyph_strategy: "only_differences",
+                type:"dna"
             }
     );
 </script>
