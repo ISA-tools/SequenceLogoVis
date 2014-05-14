@@ -25,12 +25,15 @@
 <script type="text/javascript">
     SequenceLogo.rendering.createSequenceLogo(
             {
-                files: ["data/dna-a.txt", "data/dna-b.txt"],
+                files: ["data/panel-a.txt", "data/panel-b.txt"],
                 placement: "visualization",
                 width: 1000,
                 height: 500,
                 glyph_strategy: "only_differences",
-                type:"dna"
+                height_algorithm: "frequency",
+                type:"amino_acids",
+                highlight_conserved: false,
+                draw_consensus: true
             }
     );
 </script>

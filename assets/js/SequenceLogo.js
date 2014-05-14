@@ -96,6 +96,15 @@ SequenceLogo.rendering = {
         if (options.glyph_strategy)
             SequenceLogo.variables.glyph_strategy = options.glyph_strategy;
 
+        if (options.height_algorithm)
+            SequenceLogo.variables.height_algorithm = options.height_algorithm;
+
+        if("draw_consensus" in options)
+            SequenceLogo.variables.draw_consensus = options.draw_consensus;
+
+        if("highlight_conserved" in options)
+            SequenceLogo.variables.highlight_conserved = options.highlight_conserved;
+
 
         SequenceLogo.variables.canvas = new Raphael(options.placement, options.width, options.height);
         SequenceLogo.rendering.processSequenceFiles(options.files);
