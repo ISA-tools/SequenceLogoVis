@@ -112,3 +112,6 @@ This example also shows the detail on demand view to give the actual number of s
             }
     );
 ```
+
+###Cite this work
+E. Maguire, P. Rocca-Serra, S.-A. Sansone, and M. Chen, Redesigning the sequence logo with glyph-based approaches to aid interpretation, In Proceedings of EuroVis 2014, Short Paper (2014)
