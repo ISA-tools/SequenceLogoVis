@@ -47,7 +47,7 @@ SequenceLogo.variables = {
         W: {"color": "#E57E25", "name": "Tryptophan", "short": "Trp", "charge": 0, "hydropathy": -0.9},
 
         N: {"color": "#92278F", "name": "Asparagine", "short": "Asn", "charge": 0, "hydropathy": -3.5},
-        Q: {"color": "#92278F", "name": "Glutamine", "short": "Pro", "charge": 0, "hydropathy": -3.5},
+        Q: {"color": "#92278F", "name": "Glutamine", "short": "Gln", "charge": 0, "hydropathy": -3.5},
 
         X: {"color": "#f1f2f1", "name": "Unknown", "short": "X", "charge": 0, "hydropathy": 0}
     },
