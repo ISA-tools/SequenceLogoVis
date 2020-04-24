@@ -6,7 +6,7 @@
 
 Last Updated 14 May 2014
 
-##Using the Sequence Logo
+## Using the Sequence Logo
 
 
 
@@ -30,7 +30,7 @@ To use the sequence logo, include the 'assets' found in the repository in your c
 ```
 	
 
-##Protein Support
+## Protein Support
 <div align="center">
 <img src="http://isatools.files.wordpress.com/2014/05/screen-shot-2014-05-14-at-11-47-05.png" width="600px"/>
 </div>
@@ -45,13 +45,13 @@ This example also shows the detail on demand view to give the actual number of s
 
 
 
-##DNA Support
+## DNA Support
 
 <div align="center">
 <img src="http://isatools.files.wordpress.com/2014/05/screen-shot-2014-05-14-at-11-43-15.png" width="600px"/>
 </div>
 
-##Configurability
+## Configurability
 
 ### Highlight Conserved Regions
 
@@ -113,5 +113,5 @@ This example also shows the detail on demand view to give the actual number of s
     );
 ```
 
-###Cite this work
-E. Maguire, P. Rocca-Serra, S.-A. Sansone, and M. Chen, Redesigning the sequence logo with glyph-based approaches to aid interpretation, In Proceedings of EuroVis 2014, Short Paper (2014)
+### Cite this work
+[E. Maguire, P. Rocca-Serra, S.-A. Sansone, and M. Chen, Redesigning the sequence logo with glyph-based approaches to aid interpretation, In Proceedings of EuroVis 2014, Short Paper (2014)](https://isa-tools.org/wp-content/uploads/2014/07/sequencelogoredesign.pdf)
